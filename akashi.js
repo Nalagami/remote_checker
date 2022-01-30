@@ -11,48 +11,48 @@ const GET_START_TIME = "080000";
 const GET_END_TIME = "092000";
 
 //管理下従業員のステータスを取得する関数
-function getStaffsStatus(){
+function getStaffsStatus() {
 
     const AKASHI_API_PARAM = "/staffs";
     let PAGE_NUMBER = 0;
     let REQUEST_URI = `${AKASHI_REQEST_URL}${AKASHI_API_PARAM}?token=${AKASHI_API_TOKEN}&page=${PAGE_NUMBER}`
-    
+
     let objectStaffsStatus = UrlFetchApp.fetch(REQUEST_URI).getContentText();
     let responseObject
 
     // APIの成功判定
-    if(objectStaffsStatus['success'] != true){
+    if (objectStaffsStatus['success'] != true) {
         console.log("APIからの情報取得に失敗しました");
         return objectStaffsStatus['errors'];
     }
-    else{
+    else {
         responseObject = objectStaffsStatus["response"];
     }
 
     // 管理下の従業員全員分の情報を取得する
     // TODO:管理下の従業員が20人より多いとき、このメソッドが正常に動作するか確認する
-    if(responseObject["TotalCount"] > 20){
+    if (responseObject["TotalCount"] > 20) {
         let countMember = responseObject["TotalCount"];
         countMember -= 20;
         let counter = 1;
-        while(true){
+        while (true) {
             PAGE_NUMBER = counter;
             REQUEST_URI = `${AKASHI_REQEST_URL}${AKASHI_API_PARAM}?token=${AKASHI_API_TOKEN}&page=${PAGE_NUMBER}`
             objectStaffsStatus = UrlFetchApp.fetch(REQUEST_URI).getContentText();
 
             // APIの成功判定
-            if(objectStaffsStatus['success'] != true){
+            if (objectStaffsStatus['success'] != true) {
                 console.log("APIからの情報取得に失敗しました");
                 return objectStaffsStatus['errors'];
             }
-            else{
+            else {
                 Object.assign(responseObject, objectStaffsStatus["response"]);
             }
-            
+
             countMember -= 20;
 
             // 全員分取得でいたらループから抜け出す
-            if(countMember <= 0) 
+            if (countMember <= 0)
                 break
 
             counter += 1;
@@ -63,24 +63,47 @@ function getStaffsStatus(){
 }
 
 // 管理下従業員のidを「,」区切りの文字列にする関数
-function shapingStafsId(StaffsObject){
+function shapingStafsId(StaffsObject) {
     staffsIds = ""
-    for (const staff in StaffsObject["staffs"]){
+    for (const staff in StaffsObject["staffs"]) {
         staffsIds += `${staff["staffId"]},`;
     }
     // 末尾のカンマを削除
-    var staffsIds = staffsIds.slice( 0, -1 );
+    var staffsIds = staffsIds.slice(0, -1);
     logger.log(staffsIds);
     return staffsIds
 }
 
-function getMultipleStamps() {
+function getMultipleStamps(staffsIds) {
 
     const AKASHI_API_PARAM = "/multiple_stamps";
-    
-    const REQUEST_URI = `${AKASHI_REQEST_URL}${AKASHI_API_PARAM}?token=${AKASHI_API_TOKEN}&start_date=${GET_START_TIME}&end_date=${GET_END_TIME}`
+    const REQUEST_URI = `${AKASHI_REQEST_URL}${AKASHI_API_PARAM}?token=${AKASHI_API_TOKEN}&start_date=${GET_START_TIME}&end_date=${GET_END_TIME}&staff_ids=${staffsIds}`
 
     let objectMultipleStamps = UrlFetchApp.fetch(REQUEST_URI).getContentText();
+    let responseObject;
+
+    // APIの成功判定
+    if (objectStaffsStatus['success'] != true) {
+        console.log("APIからの情報取得に失敗しました");
+        return objectStaffsStatus['errors'];
+    }
+    else {
+        // TODO:代入のほうが良いか確認する
+        Object.assign(responseObject, objectStaffsStatus["response"]);
+    }
+
+    // TODO:リモートワークのステータスがどこに入るか確認する
+
+    /* 
+        スプレッドシートから取得したデータとAKASHIのデータを比較できる形にしなければいけない
+        基本的にAKASHIの方から回して行けば良いと思うが…
+        …[{name: , id: , remoteStatus:}]って形にしてあげて、for文でname部分をスプレッドシートから探索して、その行のステータスと比較してあげれば良いかな…
+    */
+    // const result = array.filter(value => {
+    //     if(value.name.indexOf("名前") !== -1){
+    //         return value
+    //     }
+    // });
 
     return objectMultipleStamps
 }
